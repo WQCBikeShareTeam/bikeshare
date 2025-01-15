@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-API_KEY = os.getenv("OPENCAGE_API_KEY")
+API_KEY = os.getenv("428829c83c674dc3a99a1ea6676c17f5")
 
 CACHE_FILE = "station_coordinates_cache.json"
 

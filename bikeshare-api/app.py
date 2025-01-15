@@ -3,7 +3,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 # Import the necessary functions and data
 from bike_counts import fetch_bike_counts, check_for_rebalancing
-from calculate_clusters import execute_queries_on_remote, stations_info  # Adjust import as needed
+from get_clusters.calculate_clusters import execute_queries_on_remote, stations_info  # Adjust import as needed
 
 app = Flask(__name__)
 

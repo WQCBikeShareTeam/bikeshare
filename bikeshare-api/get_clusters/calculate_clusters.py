@@ -1,9 +1,9 @@
-from fetch_coordinates import get_coordinates
+from get_clusters.fetch_coordinates import get_coordinates
 from math import radians, cos, sin, sqrt, atan2
 from neo4j import GraphDatabase # type: ignore
 
 # Load all station names from a text file
-with open("unique_station_names.txt", "r") as f:
+with open("bikeshare-api/get_clusters/unique_station_names.txt", "r") as f:
     all_stations = [line.strip() for line in f.readlines()]
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -165,9 +165,8 @@ if __name__ == "__main__":
 
     print(f"Generated {len(queries)} Cypher queries and saved to {output_file}.")
 
-    # Execute queries on a remote Neo4j instance
-    remote_uri = "bolt://localhost:7687"  # Replace with your Neo4j URI
+    remote_uri = "neo4j://localhost:7687"  # Replace with your Neo4j URI
     username = "neo4j"  # Replace with your username
-    password = "testpassword"  # Replace with your password
+    password = "Jacksonf91*"  # Replace with your password
 
     execute_queries_on_remote(queries, remote_uri, username, password)

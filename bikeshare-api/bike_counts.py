@@ -97,9 +97,9 @@ def check_for_rebalancing(station_bike_counts, threshold_low=5, threshold_high=1
 
 def main():
     # Replace with your Neo4j credentials
-    remote_uri = "bolt://localhost:7687"
-    username = "neo4j"
-    password = "testpassword"
+    remote_uri = "neo4j+s://37f0488d.databases.neo4j.io"  # Replace with your Neo4j URI
+    username = "neo4j"  # Replace with your username
+    password = "Q0YsXHrcDzwbArLutk837JcuRzuG_jBLQo3QaogSE_U"  # Replace with your password
 
     # Get stations from the database
     stations = get_station_info_from_db(remote_uri, username, password)
