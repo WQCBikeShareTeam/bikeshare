@@ -39,8 +39,8 @@ class WeatherThresholds:
     """Thresholds for categorizing precipitation"""
     LIGHT_RAIN_MM: float = 2.5  # 0-2.5mm per hour is light rain
     HEAVY_RAIN_MM: float = 7.5  # >7.5mm per hour is heavy rain
-    LIGHT_SNOW_MM: float = 1.0  # 0-1mm per hour (water equivalent) is light snow
-    HEAVY_SNOW_MM: float = 4.0  # >4mm per hour (water equivalent) is heavy snow
+    LIGHT_SNOW_MM: float = 1.0  # 0-1cm per hour (water equivalent) is light snow
+    HEAVY_SNOW_MM: float = 4.0  # >4cm per hour (water equivalent) is heavy snow
     PRECIP_PROBABILITY_THRESHOLD: float = 0.3  # 30% chance threshold
 
 class WeatherService:
