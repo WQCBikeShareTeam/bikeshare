@@ -100,7 +100,7 @@ def prepare_flow_data(trip_data_path: str, month: int = None, day_of_week: str =
         on=['station_id', 'station_name', 'date'],
         how='outer'
     ).fillna(0)
-
+## This results in a dataframe with 2 columns: 
     # Calculate net flow
     flow_data['net_flow'] = flow_data['bikes_arriving'] - flow_data['bikes_leaving']
 
@@ -251,7 +251,7 @@ def dynamic_kmeans(station_data, manual_stations, min_flow=-100, max_flow=100, m
         return best_cluster
 
     # Balance clusters with stricter controls
-    MAX_ATTEMPTS_PER_CLUSTER = 6000  # Increased attempts
+    MAX_ATTEMPTS_PER_CLUSTER = 3000  # Increased attempts
     
     for iteration in range(20):  # Increased iterations
         print(f"\nIteration {iteration + 1}")

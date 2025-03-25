@@ -535,7 +535,7 @@ def get_station_predictions(station: Dict[str, any], hour: datetime) -> List[Dic
         
         predictions = []
         current_bikes = 25  # Starting assumption
-        
+        ##Generate real amount of bikes
         # Generate predictions for next 24 hours
         for i in range(24):
             prediction_time = hour + timedelta(hours=i)
@@ -557,7 +557,8 @@ def get_station_predictions(station: Dict[str, any], hour: datetime) -> List[Dic
             
             # Update bike count
             new_bikes = max(0, min(35, current_bikes + predicted_flow))
-            
+            #####This Needs to be changed too the actual bike count at the sttaion
+            ## We need to put the minimum and maximum amount of bikes at the station
             predictions.append({
                 'hour': prediction_key,
                 'net_flow': round(predicted_flow, 2),
@@ -569,7 +570,26 @@ def get_station_predictions(station: Dict[str, any], hour: datetime) -> List[Dic
             })
             
             current_bikes = new_bikes
+            ## We need a new function to determine payout of each station
+            ## For given hour, for a given station in the next 24 hours
+                    # If (predicted bike amount is greter then capacity, trigger calculate payout function). Take the difference beteween predicted bikes
+                    # and the capacity
+                    # DO the same if the predicted bikeS LESS the zero (Take difference)
             
+            ## for payout function
+            ##IF less then zero, for that particular station (AADD new columns too station)
+            ##Add Column, Ride Time
+            ##Add Column, Is Electric Bike 
+            ##Add Column, Is Premium Member
+            ##Calculate total payout for that ride
+            ##Find the costs for bikes per hour and shit.
+            ##Calculate the income from rider based on if electric or if regular bike.
+            ##If premium membe, calculate as if casual rider but multiply total by 0.8 (cause they give less money)
+            ## Add these columns (including the payout columns) to the main data frame.
+            ##Now using predictions calculate net payout aand include it in the station predictions.
+            ##Create a new function that for each station, it takes their stataion predictions and finds the cost for that station
+            ##Then we will look at clusters and weigh cost (See setuptruckroute optimiataion too see how it flows in.) 
+                       
         return predictions
         
     except Exception as e:
