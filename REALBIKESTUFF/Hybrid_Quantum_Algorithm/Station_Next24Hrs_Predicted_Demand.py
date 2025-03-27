@@ -22,6 +22,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 import joblib
 import re
+from typing import List, Dict
 
 # ============================
 # Configuration Constants
@@ -598,72 +599,184 @@ def export_predictions_to_csv(clusters, cluster_id, filename="hourly_predictions
     else:
         print("No prediction data available to export.")
 
-def create_reduced_clusters(cluster_id=4, max_distance=1, clusters=None, use_cached_predictions=USE_CACHE):
+def calculate_optimal_bike_adjustment(station_predictions: List[Dict[str, any]], 
+                                      current_bikes: int = 10,
+                                      station_capacity: int = 25) -> Dict[str, any]:
     """
-    Create reduced clusters by grouping stations needing bike adjustments.
-    (For simplicity, this example only groups stations that already show a nonzero optimal adjustment.)
+    Calculate the optimal number of bikes to add or remove from a station
+    to minimize financial losses over the next 24 hours.
+    
+    Parameters:
+        station_predictions: List of hourly prediction dictionaries for the station.
+        current_bikes: Current number of bikes at the station.
+        station_capacity: Maximum capacity of the station.
+    
+    Returns:
+        A dictionary with the following keys:
+            - 'current_bikes': the original bike count.
+            - 'optimal_bikes': the new bike count after applying the recommended adjustment.
+            - 'recommended_adjustment': number of bikes to add (if positive) or remove (if negative).
+            - 'baseline_loss': total loss (payout) with the current bike count.
+            - 'optimized_loss': total loss after the optimal adjustment.
+            - 'savings': the reduction in loss achieved by the optimal adjustment.
+            - 'optimized_predictions': the new prediction list based on the adjusted bike counts.
+    """
+    # Define the range of possible adjustments (up to ±20 bikes, but not reducing below 0 or above capacity)
+    min_adjustment = -min(current_bikes, 20)
+    max_adjustment = min(station_capacity - current_bikes, 20)
+    possible_adjustments = range(min_adjustment, max_adjustment + 1)
+    
+    # Calculate baseline total loss (the sum of hourly losses)
+    baseline_loss = sum(pred['hourly_loss'] for pred in station_predictions)
+    
+    best_adjustment = 0
+    lowest_loss = baseline_loss
+    adjusted_predictions = None
+    
+    # Try each possible adjustment (skip 0 adjustment since that is the baseline)
+    for adjustment in possible_adjustments:
+        if adjustment == 0:
+            continue
+        
+        # Create a deep copy of predictions so that simulation doesn't affect the original list
+        test_predictions = copy.deepcopy(station_predictions)
+        
+        # Set the adjusted bike count for the first hour
+        new_bike_count = current_bikes + adjustment
+        if test_predictions:
+            test_predictions[0]['predicted_bikes'] = new_bike_count
+        
+        # Recalculate the predicted bike counts for each subsequent hour
+        for i in range(len(test_predictions)):
+            if i == 0:
+                bikes_available = new_bike_count
+            else:
+                bikes_available = test_predictions[i-1]['predicted_bikes'] + test_predictions[i]['net_flow']
+                bikes_available = max(0, min(station_capacity, bikes_available))
+                test_predictions[i]['predicted_bikes'] = bikes_available
+        
+        # Recalculate the payout metrics based on the adjusted predictions
+        test_predictions = calculate_station_payout(test_predictions, station_capacity)
+        
+        # Sum the loss for this adjustment scenario
+        adjusted_loss = sum(pred['hourly_loss'] for pred in test_predictions)
+        
+        # If this adjustment gives a lower loss, record it
+        if adjusted_loss < lowest_loss:
+            lowest_loss = adjusted_loss
+            best_adjustment = adjustment
+            adjusted_predictions = test_predictions
+    
+    # Calculate savings achieved by the optimal adjustment
+    savings = baseline_loss - lowest_loss
+    
+    # Optionally, if the adjustment is small and the savings are low, do not change the current count
+    if -3 <= best_adjustment <= 3 and savings <= 25:
+        best_adjustment = 0
+        savings = 0
+    
+    return {
+        'current_bikes': current_bikes,
+        'optimal_bikes': current_bikes + best_adjustment,
+        'recommended_adjustment': best_adjustment,
+        'baseline_loss': round(baseline_loss, 2),
+        'optimized_loss': round(lowest_loss, 2),
+        'savings': round(savings, 2),
+        'optimized_predictions': adjusted_predictions if best_adjustment != 0 else station_predictions
+    }
+
+def create_reduced_clusters(cluster_id=3, max_distance=0.5, clusters=None, use_cached_predictions=True):
+    """
+    Create reduced clusters by combining nearby stations that need bike adjustments.
     """
     if clusters is None:
-        clusters = load_clusters_with_coordinates()
-    if cluster_id not in clusters:
-        print(f"Cluster {cluster_id} not found.")
+        all_clusters = load_clusters_with_coordinates()
+    else:
+        all_clusters = clusters
+
+    if cluster_id not in all_clusters:
+        print(f"Cluster {cluster_id} not found in cluster data")
         return []
-    cluster = clusters[cluster_id]
+
+    cluster = all_clusters[cluster_id]
     print(f"Processing cluster {cluster_id} with {len(cluster)} stations")
+    
     current_time = datetime.now()
     csv_predictions = {}
     if use_cached_predictions:
         csv_predictions = load_predictions_from_csv()
-    for station in cluster:
-        name = station['name']
-        if use_cached_predictions and name in csv_predictions:
-            station['predictions'] = csv_predictions[name]
-        else:
-            station['predictions'] = get_station_predictions(station, current_time)
-        station['current_bikes'] = DEFAULT_STARTING_BIKES
-        # Calculate the current payout as the sum of hourly losses.
-        station['current_payout'] = sum(pred.get('hourly_loss', 0) for pred in station['predictions'])
-        desired_bike_level = STATION_CAPACITY / 2
-        if station['predictions']:
-            final_predicted = station['predictions'][-1].get('predicted_bikes', DEFAULT_STARTING_BIKES)
-            # Compute the optimal adjustment as the (amplified) difference from the desired level.
-            station['optimal_adjustment'] = round(2 * (desired_bike_level - final_predicted))
-        else:
-            station['optimal_adjustment'] = 0
-        
-        # Fix payout benefit calculation:
-        # Here we assume you gain $5 benefit per bike adjusted.
-        benefit_rate = 5.0  # $5 benefit per bike
-        station['payout_benefit'] = abs(station['optimal_adjustment']) * benefit_rate
-        
-        # Optionally, compute an "optimal payout" by subtracting the benefit from the current payout.
-        station['optimal_payout'] = station['current_payout'] - station['payout_benefit']
+        print(f"Loaded predictions for {len(csv_predictions)} stations from CSV")
     
-    # Group stations that need adjustment (here, all stations with nonzero adjustment)
+    # Process each station in the cluster
+    for station in cluster:
+        station_name = station['name']
+        try:
+            current_bikes = 10  # Starting assumption; can be replaced by actual count if available
+            station['current_bikes'] = current_bikes
+            
+            # Get predictions:
+            if use_cached_predictions and station_name in csv_predictions:
+                predictions = csv_predictions[station_name]
+                print(f"Using CSV predictions for station {station_name}")
+                station['predictions'] = predictions
+            else:
+                print(f"Calculating new predictions for station {station_name}")
+                predictions = get_station_predictions(station, current_time)
+                station['predictions'] = predictions
+            
+            # Calculate current (baseline) payout from the predictions
+            current_payout = sum(pred.get('hourly_loss', 0) for pred in predictions)
+            station['current_payout'] = current_payout
+            
+            # Calculate optimal bike adjustment and resulting (optimized) loss:
+            optimization_result = calculate_optimal_bike_adjustment(predictions, current_bikes=current_bikes)
+            station['optimal_adjustment'] = optimization_result['recommended_adjustment']
+            station['optimal_payout'] = optimization_result['optimized_loss']
+            station['adjusted_predictions'] = optimization_result['optimized_predictions']
+            
+            # Calculate payout benefit as the reduction in loss achieved by the adjustment:
+            station['payout_benefit'] = station['current_payout'] - station['optimal_payout']
+            
+            print(f"Station {station_name}: adjustment={station['optimal_adjustment']}, benefit=${station['payout_benefit']:.2f}")
+        except Exception as e:
+            print(f"Error processing station {station_name}: {e}")
+            traceback.print_exc()
+            station['optimal_adjustment'] = 0
+            station['payout_benefit'] = 0
+
+    # (Then follow your existing logic to form sub-clusters from stations that need adjustment.)
     stations_needing_adjustment = [s for s in cluster if abs(s.get('optimal_adjustment', 0)) > 0]
+    print(f"Found {len(stations_needing_adjustment)} stations needing adjustment")
+    
     sub_clusters = []
-    remaining = stations_needing_adjustment.copy()
-    while remaining:
-        current = remaining.pop(0)
-        sub_cluster = [current]
+    remaining_stations = stations_needing_adjustment.copy()
+    
+    while remaining_stations:
+        current_station = remaining_stations.pop(0)
+        sub_cluster = [current_station]
         i = 0
-        while i < len(remaining):
-            s = remaining[i]
-            if calculate_distance((current['latitude'], current['longitude']),
-                                  (s['latitude'], s['longitude'])) <= max_distance:
-                sub_cluster.append(s)
-                remaining.pop(i)
+        while i < len(remaining_stations):
+            station = remaining_stations[i]
+            if calculate_distance(
+                (current_station['latitude'], current_station['longitude']),
+                (station['latitude'], station['longitude'])
+            ) <= max_distance:
+                sub_cluster.append(station)
+                remaining_stations.pop(i)
             else:
                 i += 1
-        total_adjustment = sum(s.get('optimal_adjustment', 0) for s in sub_cluster)
-        total_payout_benefit = sum(s.get('payout_benefit', 0) for s in sub_cluster)
+        total_adjustment = sum(s['optimal_adjustment'] for s in sub_cluster)
+        total_payout_benefit = sum(s['payout_benefit'] for s in sub_cluster)
         sub_clusters.append({
             'stations': sub_cluster,
             'total_adjustment': total_adjustment,
             'total_payout_benefit': total_payout_benefit,
             'center': calculate_cluster_center(sub_cluster)
         })
+    
     print(f"Created {len(sub_clusters)} sub-clusters")
+    for i, sc in enumerate(sub_clusters):
+        print(f"Sub-cluster {i+1}: {len(sc['stations'])} stations, adjustment: {sc['total_adjustment']}, benefit: ${sc['total_payout_benefit']:.2f}")
     return sub_clusters
 
 def optimize_bike_allocation(sub_clusters, available_bikes):

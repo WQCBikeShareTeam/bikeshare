@@ -7,7 +7,7 @@ route (using a brute-force TSP solver as a placeholder for a quantum-inspired op
 among the remaining cluster centers, and visualizes the path.
 
 Assumptions for travel cost estimation:
- - Average speed is 50 km/h (including stops).
+ - Average speed is 25 km/h (including stops). TODO: switch with actual path time, google api
  - Driver wage is $17.50 per hour.
  - Wear and tear cost is $0.15 per km.
 """
