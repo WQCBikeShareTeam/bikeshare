@@ -1,0 +1,24 @@
+Problem name: Cluster Route Optimization
+
+Maximize
+  -19.0182*Cluster_0*Cluster_1 - 34.346500000000006*Cluster_0*Cluster_2
+  - 17.051499999999997*Cluster_0*Cluster_3 - 37.5184*Cluster_0*Cluster_4
+  - 29.80775*Cluster_0*Cluster_5 - 29.291*Cluster_1*Cluster_2
+  - 10.429850000000002*Cluster_1*Cluster_3
+  - 32.701049999999995*Cluster_1*Cluster_4 - 27.00145*Cluster_1*Cluster_5
+  - 28.250400000000003*Cluster_2*Cluster_3
+  - 8.286299999999999*Cluster_2*Cluster_4 - 14.0429*Cluster_2*Cluster_5
+  - 31.76045*Cluster_3*Cluster_4 - 24.93125*Cluster_3*Cluster_5
+  - 10.82095*Cluster_4*Cluster_5 + 30.410000000000004*Cluster_0
+  + 40.809999999999995*Cluster_1 + 8.34*Cluster_2 + 3.8800000000000003*Cluster_3
+  + 0.14*Cluster_4 + 10.58*Cluster_5
+
+Subject to
+  Linear constraints (2)
+    5*Cluster_0 + 7*Cluster_1 + 5*Cluster_2 + 9*Cluster_3 + 7*Cluster_4
+    + 4*Cluster_5 >= 0  'min_bikes'
+    5*Cluster_0 + 7*Cluster_1 + 5*Cluster_2 + 9*Cluster_3 + 7*Cluster_4
+    + 4*Cluster_5 <= 80  'max_bikes'
+
+  Binary variables (6)
+    Cluster_0 Cluster_1 Cluster_2 Cluster_3 Cluster_4 Cluster_5

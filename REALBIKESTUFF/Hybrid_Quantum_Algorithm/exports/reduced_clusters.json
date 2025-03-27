@@ -1,0 +1,154 @@
+{
+  "timestamp": "2025-03-27T11:37:47.641738",
+  "clusters_count": 6,
+  "clusters": [
+    {
+      "id": 0,
+      "station_count": 1,
+      "total_adjustment": 5,
+      "total_payout_benefit": 30.410000000000004,
+      "center": [
+        43.6464,
+        -79.4633
+      ],
+      "stations": [
+        {
+          "name": "High Park Amphitheatre",
+          "latitude": 43.6464,
+          "longitude": -79.4633,
+          "current_bikes": 10,
+          "optimal_adjustment": 5,
+          "payout_benefit": 30.410000000000004
+        }
+      ],
+      "allocation": {
+        "requested_bikes": 5,
+        "allocated_bikes": 5,
+        "efficiency": 6.082000000000001,
+        "benefit": 30.410000000000004
+      }
+    },
+    {
+      "id": 1,
+      "station_count": 1,
+      "total_adjustment": 7,
+      "total_payout_benefit": 40.809999999999995,
+      "center": [
+        43.6283,
+        -79.4789
+      ],
+      "stations": [
+        {
+          "name": "Humber Bay Shores Park West",
+          "latitude": 43.6283,
+          "longitude": -79.4789,
+          "current_bikes": 10,
+          "optimal_adjustment": 7,
+          "payout_benefit": 40.809999999999995
+        }
+      ],
+      "allocation": {
+        "requested_bikes": 7,
+        "allocated_bikes": 7,
+        "efficiency": 5.829999999999999,
+        "benefit": 40.809999999999995
+      }
+    },
+    {
+      "id": 2,
+      "station_count": 1,
+      "total_adjustment": 5,
+      "total_payout_benefit": 8.34,
+      "center": [
+        43.6475,
+        -79.3887
+      ],
+      "stations": [
+        {
+          "name": "John St  / Mercer St - SMART",
+          "latitude": 43.6475,
+          "longitude": -79.3887,
+          "current_bikes": 10,
+          "optimal_adjustment": 5,
+          "payout_benefit": 8.34
+        }
+      ],
+      "allocation": {
+        "requested_bikes": 4,
+        "allocated_bikes": 4,
+        "efficiency": 2.645,
+        "benefit": 10.58
+      }
+    },
+    {
+      "id": 3,
+      "station_count": 1,
+      "total_adjustment": -9,
+      "total_payout_benefit": 3.8800000000000003,
+      "center": [
+        43.6392,
+        -79.4759
+      ],
+      "stations": [
+        {
+          "name": "Ripley Ave / Ormskirk Ave",
+          "latitude": 43.6392,
+          "longitude": -79.4759,
+          "current_bikes": 10,
+          "optimal_adjustment": -9,
+          "payout_benefit": 3.8800000000000003
+        }
+      ],
+      "allocation": {
+        "requested_bikes": 5,
+        "allocated_bikes": 4,
+        "efficiency": 1.668,
+        "benefit": 6.672000000000001
+      }
+    },
+    {
+      "id": 4,
+      "station_count": 1,
+      "total_adjustment": -7,
+      "total_payout_benefit": 0.14,
+      "center": [
+        43.6473,
+        -79.3969
+      ],
+      "stations": [
+        {
+          "name": "Spadina Ave / Adelaide St W",
+          "latitude": 43.6473,
+          "longitude": -79.3969,
+          "current_bikes": 10,
+          "optimal_adjustment": -7,
+          "payout_benefit": 0.14
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "station_count": 1,
+      "total_adjustment": 4,
+      "total_payout_benefit": 10.58,
+      "center": [
+        43.6438,
+        -79.4097
+      ],
+      "stations": [
+        {
+          "name": "Walnut Ave / Queen St W",
+          "latitude": 43.6438,
+          "longitude": -79.4097,
+          "current_bikes": 10,
+          "optimal_adjustment": 4,
+          "payout_benefit": 10.58
+        }
+      ]
+    }
+  ],
+  "allocation_summary": {
+    "total_benefit": 88.472,
+    "remaining_bikes": 0
+  }
+}
