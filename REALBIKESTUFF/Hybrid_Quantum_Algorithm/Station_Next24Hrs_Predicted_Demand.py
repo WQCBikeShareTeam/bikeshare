@@ -2910,7 +2910,7 @@ def main(target_cluster_id=3, use_cached_predictions=True, use_cached_clusters=T
     """
     # Load clusters with coordinates
     clusters = load_clusters_with_coordinates()
-    
+    ## we can mess around with this^^^^
     # Check if the target cluster exists
     if target_cluster_id not in clusters:
         print(f"Error: Cluster {target_cluster_id} not found. Available clusters: {list(clusters.keys())}")
@@ -2956,7 +2956,8 @@ def main(target_cluster_id=3, use_cached_predictions=True, use_cached_clusters=T
             
             # Get predictions for the next 24 hours
             predictions = get_station_predictions(station, current_time)
-            
+            ##^^ 
+
             # Calculate station payout
             predictions = calculate_station_payout(predictions)
             
