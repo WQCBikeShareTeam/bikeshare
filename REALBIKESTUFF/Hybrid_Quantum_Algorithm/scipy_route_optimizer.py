@@ -264,87 +264,79 @@ def calculate_route_metrics(selected_clusters, clusters, cost_matrix):
     }
 
 
-def visualize_route(selected_clusters, clusters, cost_matrix, title="Optimizer Route", filename="route.png"):
+def visualize_route(selected_clusters, clusters, cost_matrix, title="Best Route", filename="best_route.png"):
     """
-    Visualize the selected route as a network graph
+    Visualize the best route (optimal ordering) among the selected clusters.
+    This function computes a TSP route (using a simple heuristic) and draws only that path.
     
     Args:
-        selected_clusters: List of selected cluster names
-        clusters: List of cluster data
-        cost_matrix: Travel costs between clusters
+        selected_clusters: List of selected cluster names (e.g. ['Cluster_1', 'Cluster_7'])
+        clusters: List of all clusters with their data
+        cost_matrix: Dictionary with travel costs between clusters
         title: Title for the visualization
         filename: Filename to save the visualization
     """
-    # Create a graph
-    G = nx.Graph()
-    
-    # Add nodes for selected clusters
+    import networkx as nx
+    import matplotlib.pyplot as plt
+    import os
+
+    # Create a complete graph over the selected clusters.
+    # We'll label nodes using their names.
+    G = nx.complete_graph(len(selected_clusters))
+    mapping = {i: selected_clusters[i] for i in range(len(selected_clusters))}
+    G = nx.relabel_nodes(G, mapping)
+
+    # Set positions for nodes from the clusters' center coordinates.
+    pos = {}
     for cluster_name in selected_clusters:
         cluster_idx = int(cluster_name.split('_')[1])
-        cluster = clusters[cluster_idx]
-        
-        # Add node with attributes
-        G.add_node(
-            cluster_name, 
-            pos=tuple(cluster['center']), 
-            bikes=abs(cluster['total_adjustment']),
-            benefit=cluster['total_payout_benefit']
-        )
+        pos[cluster_name] = tuple(clusters[cluster_idx]['center'])
     
-    # Add edges between all selected clusters with costs as weights
-    for i, cluster_from in enumerate(selected_clusters):
-        for j, cluster_to in enumerate(selected_clusters):
-            if i < j:  # Only add each edge once
-                if cluster_from in cost_matrix and cluster_to in cost_matrix[cluster_from]:
-                    cost = cost_matrix[cluster_from][cluster_to]
-                    G.add_edge(cluster_from, cluster_to, weight=cost)
+    # Set edge weights in the complete graph using the cost matrix.
+    for i in range(len(selected_clusters)):
+        for j in range(i + 1, len(selected_clusters)):
+            n1 = selected_clusters[i]
+            n2 = selected_clusters[j]
+            weight = cost_matrix.get(n1, {}).get(n2, 0)
+            G[n1][n2]['weight'] = weight
+            G[n2][n1]['weight'] = weight
+
+    # Compute a TSP route (this returns a cycle).
+    try:
+        tsp_route = nx.approximation.traveling_salesman_problem(G, weight='weight', cycle=True)
+        # Remove the last node if it repeats the first to get a simple path.
+        if tsp_route[0] == tsp_route[-1]:
+            tsp_route = tsp_route[:-1]
+    except Exception as e:
+        print(f"Error computing TSP route: {e}")
+        tsp_route = selected_clusters  # Fallback: use the order of selection
+
+    # Create a directed graph H to represent the path.
+    H = nx.DiGraph()
+    for i in range(len(tsp_route) - 1):
+        n1 = tsp_route[i]
+        n2 = tsp_route[i+1]
+        weight = cost_matrix.get(n1, {}).get(n2, 0)
+        H.add_edge(n1, n2, weight=weight)
+    for node in tsp_route:
+        H.add_node(node, pos=pos[node])
     
-    # If there are no edges (only one node), add a self-loop
-    if len(G.edges) == 0 and len(G.nodes) == 1:
-        node = list(G.nodes)[0]
-        G.add_edge(node, node, weight=0)
-    
-    # Create figure
+    # Draw the route.
     plt.figure(figsize=(10, 8))
-    
-    # Get positions from node attributes
-    pos = nx.get_node_attributes(G, 'pos')
-    
-    # Draw nodes with size proportional to bikes and color to benefit
-    node_sizes = [G.nodes[n]['bikes'] * 100 for n in G.nodes]
-    node_colors = [G.nodes[n]['benefit'] for n in G.nodes]
-    
-    nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors, cmap=plt.cm.viridis)
-    
-    # Draw edges with width proportional to inverse of cost
-    edge_widths = [1 / (G.edges[e]['weight'] + 0.1) * 2 for e in G.edges]
-    nx.draw_networkx_edges(G, pos, width=edge_widths, alpha=0.7)
-    
-    # Draw node labels
-    labels = {}
-    for n in G.nodes:
-        cluster_idx = int(n.split('_')[1])
-        bikes = abs(clusters[cluster_idx]['total_adjustment'])
-        benefit = clusters[cluster_idx]['total_payout_benefit']
-        labels[n] = f"{n}\n{bikes} bikes\n${benefit:.2f}"
-    
-    nx.draw_networkx_labels(G, pos, labels=labels, font_size=8)
-    
-    # Draw edge labels
-    edge_labels = {e: f"${G.edges[e]['weight']:.2f}" for e in G.edges}
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
-    
+    nx.draw_networkx_nodes(H, pos, node_size=500, node_color='lightblue')
+    nx.draw_networkx_labels(H, pos, font_size=10, font_weight='bold')
+    nx.draw_networkx_edges(H, pos, arrowstyle='->', arrowsize=15, edge_color='gray', width=2)
+    edge_labels = nx.get_edge_attributes(H, 'weight')
+    nx.draw_networkx_edge_labels(H, pos, edge_labels=edge_labels, font_size=8)
     plt.title(title)
     plt.axis('off')
     
-    # Create exports directory if it doesn't exist
+    # Save the figure.
     base_dir = os.path.dirname(os.path.abspath(__file__))
     export_dir = os.path.join(base_dir, "exports")
     os.makedirs(export_dir, exist_ok=True)
-    
-    # Save figure
     plt.savefig(os.path.join(export_dir, filename), dpi=300, bbox_inches='tight')
-    print(f"Route visualization saved to {filename}")
+    print(f"Best route visualization saved to {filename}")
     plt.close()
 
 
