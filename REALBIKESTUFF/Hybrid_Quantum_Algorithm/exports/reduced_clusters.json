@@ -1,15 +1,15 @@
 {
-  "timestamp": "2025-03-27T13:29:35.554176",
-  "clusters_count": 8,
+  "timestamp": "2025-03-27T15:15:41.812784",
+  "clusters_count": 9,
   "clusters": [
     {
       "id": 0,
-      "station_count": 1,
-      "total_adjustment": 11,
-      "total_payout_benefit": 34.11,
+      "station_count": 3,
+      "total_adjustment": -43,
+      "total_payout_benefit": 245.0,
       "center": [
-        43.6567,
-        -79.3769
+        43.65226666666667,
+        -79.37463333333334
       ],
       "stations": [
         {
@@ -17,29 +17,63 @@
           "latitude": 43.6567,
           "longitude": -79.3769,
           "current_bikes": 4,
-          "optimal_adjustment": 11,
-          "payout_benefit": 34.11
+          "optimal_adjustment": -21,
+          "payout_benefit": 105.0
+        },
+        {
+          "name": "King St E / Church St",
+          "latitude": 43.65,
+          "longitude": -79.3745,
+          "current_bikes": 4,
+          "optimal_adjustment": 3,
+          "payout_benefit": 15.0
+        },
+        {
+          "name": "King St E / Jarvis St",
+          "latitude": 43.6501,
+          "longitude": -79.3725,
+          "current_bikes": 4,
+          "optimal_adjustment": -25,
+          "payout_benefit": 125.0
         }
-      ],
-      "allocation": {
-        "cluster_center": [
-          43.6567,
-          -79.3769
-        ],
-        "requested_bikes": 11,
-        "allocated_bikes": 8,
-        "efficiency": 3.100909090909091,
-        "benefit": 24.80727272727273
-      }
+      ]
     },
     {
       "id": 1,
-      "station_count": 3,
-      "total_adjustment": 22,
-      "total_payout_benefit": 65.78,
+      "station_count": 2,
+      "total_adjustment": 12,
+      "total_payout_benefit": 60.0,
       "center": [
-        43.68899793333333,
-        -79.2974269
+        43.68445,
+        -79.2861
+      ],
+      "stations": [
+        {
+          "name": "Blantyre Park",
+          "latitude": 43.6832,
+          "longitude": -79.2806,
+          "current_bikes": 4,
+          "optimal_adjustment": 7,
+          "payout_benefit": 35.0
+        },
+        {
+          "name": "Gerrard St E / Victoria Park Ave - SMART",
+          "latitude": 43.6857,
+          "longitude": -79.2916,
+          "current_bikes": 4,
+          "optimal_adjustment": 5,
+          "payout_benefit": 25.0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "station_count": 10,
+      "total_adjustment": 170,
+      "total_payout_benefit": 880.0,
+      "center": [
+        43.688358140000005,
+        -79.29718421
       ],
       "stations": [
         {
@@ -47,35 +81,101 @@
           "latitude": 43.6884,
           "longitude": -79.3005,
           "current_bikes": 4,
+          "optimal_adjustment": 23,
+          "payout_benefit": 115.0
+        },
+        {
+          "name": "Danforth Ave / Westlake Ave",
+          "latitude": 43.6873,
+          "longitude": -79.3049,
+          "current_bikes": 4,
+          "optimal_adjustment": 25,
+          "payout_benefit": 125.0
+        },
+        {
+          "name": "Dentonia Park",
+          "latitude": 43.6936,
+          "longitude": -79.2933,
+          "current_bikes": 4,
+          "optimal_adjustment": 7,
+          "payout_benefit": 35.0
+        },
+        {
+          "name": "Gerrard St E / Ted Reeve Dr",
+          "latitude": 43.682,
+          "longitude": -79.298,
+          "current_bikes": 4,
           "optimal_adjustment": 5,
-          "payout_benefit": 15.499999999999998
+          "payout_benefit": 25.0
+        },
+        {
+          "name": "Goodwood Park Ct / Dentonia Park",
+          "latitude": 43.694,
+          "longitude": -79.2932,
+          "current_bikes": 4,
+          "optimal_adjustment": 25,
+          "payout_benefit": 125.0
+        },
+        {
+          "name": "Kingston Rd / Beech Ave",
+          "latitude": 43.6892938,
+          "longitude": -79.2958807,
+          "current_bikes": 4,
+          "optimal_adjustment": 19,
+          "payout_benefit": 95.0
         },
         {
           "name": "Langford Ave / Danforth Ave - SMART",
           "latitude": 43.6892938,
           "longitude": -79.2958807,
           "current_bikes": 4,
-          "optimal_adjustment": 9,
-          "payout_benefit": 22.54
+          "optimal_adjustment": 23,
+          "payout_benefit": 115.0
+        },
+        {
+          "name": "Lumsden Ave / Eastdale Ave",
+          "latitude": 43.6892938,
+          "longitude": -79.2958807,
+          "current_bikes": 4,
+          "optimal_adjustment": 25,
+          "payout_benefit": 125.0
+        },
+        {
+          "name": "Southwood Dr / Kingston Rd - SMART",
+          "latitude": 43.6811,
+          "longitude": -79.2984,
+          "current_bikes": 4,
+          "optimal_adjustment": -3,
+          "payout_benefit": 15.0
         },
         {
           "name": "Trent Ave / Danforth Ave",
           "latitude": 43.6893,
           "longitude": -79.2959,
           "current_bikes": 4,
-          "optimal_adjustment": 8,
-          "payout_benefit": 27.74
+          "optimal_adjustment": 21,
+          "payout_benefit": 105.0
         }
-      ]
+      ],
+      "allocation": {
+        "cluster_center": [
+          43.688358140000005,
+          -79.29718421
+        ],
+        "requested_bikes": 170,
+        "allocated_bikes": 17,
+        "efficiency": 5.176470588235294,
+        "benefit": 88.0
+      }
     },
     {
-      "id": 2,
-      "station_count": 1,
-      "total_adjustment": 4,
-      "total_payout_benefit": 6.289999999999999,
+      "id": 3,
+      "station_count": 2,
+      "total_adjustment": -4,
+      "total_payout_benefit": 20.0,
       "center": [
-        43.6748,
-        -79.3967
+        43.6786,
+        -79.39345
       ],
       "stations": [
         {
@@ -83,36 +183,70 @@
           "latitude": 43.6748,
           "longitude": -79.3967,
           "current_bikes": 4,
-          "optimal_adjustment": 4,
-          "payout_benefit": 6.289999999999999
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "station_count": 1,
-      "total_adjustment": 6,
-      "total_payout_benefit": 8.469999999999999,
-      "center": [
-        43.682,
-        -79.298
-      ],
-      "stations": [
+          "optimal_adjustment": -3,
+          "payout_benefit": 15.0
+        },
         {
-          "name": "Gerrard St E / Ted Reeve Dr",
-          "latitude": 43.682,
-          "longitude": -79.298,
+          "name": "Roxborough St W / Yonge St",
+          "latitude": 43.6824,
+          "longitude": -79.3902,
           "current_bikes": 4,
-          "optimal_adjustment": 6,
-          "payout_benefit": 8.469999999999999
+          "optimal_adjustment": -1,
+          "payout_benefit": 5.0
         }
       ]
     },
     {
       "id": 4,
+      "station_count": 3,
+      "total_adjustment": 3,
+      "total_payout_benefit": 205.0,
+      "center": [
+        43.668933333333335,
+        -79.29629999999999
+      ],
+      "stations": [
+        {
+          "name": "Hubbard Blvd / Balsam Av",
+          "latitude": 43.6684,
+          "longitude": -79.2984,
+          "current_bikes": 4,
+          "optimal_adjustment": -19,
+          "payout_benefit": 95.0
+        },
+        {
+          "name": "Hubbard Blvd. / Glen Manor Dr.",
+          "latitude": 43.6677,
+          "longitude": -79.2974,
+          "current_bikes": 4,
+          "optimal_adjustment": 3,
+          "payout_benefit": 15.0
+        },
+        {
+          "name": "Kew Beach Ave / Kenilworth Ave",
+          "latitude": 43.6707,
+          "longitude": -79.2931,
+          "current_bikes": 4,
+          "optimal_adjustment": 19,
+          "payout_benefit": 95.0
+        }
+      ],
+      "allocation": {
+        "cluster_center": [
+          43.668933333333335,
+          -79.29629999999999
+        ],
+        "requested_bikes": 3,
+        "allocated_bikes": 3,
+        "efficiency": 68.33333333333333,
+        "benefit": 205.0
+      }
+    },
+    {
+      "id": 5,
       "station_count": 1,
-      "total_adjustment": 8,
-      "total_payout_benefit": 27.95,
+      "total_adjustment": 25,
+      "total_payout_benefit": 125.0,
       "center": [
         43.6684,
         -79.3823
@@ -123,46 +257,16 @@
           "latitude": 43.6684,
           "longitude": -79.3823,
           "current_bikes": 4,
-          "optimal_adjustment": 8,
-          "payout_benefit": 27.95
-        }
-      ],
-      "allocation": {
-        "cluster_center": [
-          43.6684,
-          -79.3823
-        ],
-        "requested_bikes": 8,
-        "allocated_bikes": 8,
-        "efficiency": 3.49375,
-        "benefit": 27.95
-      }
-    },
-    {
-      "id": 5,
-      "station_count": 1,
-      "total_adjustment": 5,
-      "total_payout_benefit": 13.73,
-      "center": [
-        43.65,
-        -79.3745
-      ],
-      "stations": [
-        {
-          "name": "King St E / Church St",
-          "latitude": 43.65,
-          "longitude": -79.3745,
-          "current_bikes": 4,
-          "optimal_adjustment": 5,
-          "payout_benefit": 13.73
+          "optimal_adjustment": 25,
+          "payout_benefit": 125.0
         }
       ]
     },
     {
       "id": 6,
       "station_count": 1,
-      "total_adjustment": 4,
-      "total_payout_benefit": 21.619999999999997,
+      "total_adjustment": 17,
+      "total_payout_benefit": 85.0,
       "center": [
         43.6438577,
         -79.3695119
@@ -173,29 +277,47 @@
           "latitude": 43.6438577,
           "longitude": -79.3695119,
           "current_bikes": 4,
-          "optimal_adjustment": 4,
-          "payout_benefit": 21.619999999999997
+          "optimal_adjustment": 17,
+          "payout_benefit": 85.0
         }
-      ],
-      "allocation": {
-        "cluster_center": [
-          43.6438577,
-          -79.3695119
-        ],
-        "requested_bikes": 4,
-        "allocated_bikes": 4,
-        "efficiency": 5.404999999999999,
-        "benefit": 21.619999999999997
-      }
+      ]
     },
     {
       "id": 7,
-      "station_count": 1,
-      "total_adjustment": 4,
-      "total_payout_benefit": 7.42,
+      "station_count": 2,
+      "total_adjustment": -12,
+      "total_payout_benefit": 190.0,
       "center": [
-        43.6914,
-        -79.2881
+        43.6567157,
+        -79.3591445
+      ],
+      "stations": [
+        {
+          "name": "Queen St E / Alton Av",
+          "latitude": 43.6567157,
+          "longitude": -79.3591445,
+          "current_bikes": 4,
+          "optimal_adjustment": -25,
+          "payout_benefit": 125.0
+        },
+        {
+          "name": "Queen St E / Rushbrooke Ave",
+          "latitude": 43.6567157,
+          "longitude": -79.3591445,
+          "current_bikes": 4,
+          "optimal_adjustment": 13,
+          "payout_benefit": 65.0
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "station_count": 2,
+      "total_adjustment": 18,
+      "total_payout_benefit": 90.0,
+      "center": [
+        43.69335,
+        -79.28829999999999
       ],
       "stations": [
         {
@@ -203,8 +325,16 @@
           "latitude": 43.6914,
           "longitude": -79.2881,
           "current_bikes": 4,
-          "optimal_adjustment": 4,
-          "payout_benefit": 7.42
+          "optimal_adjustment": 3,
+          "payout_benefit": 15.0
+        },
+        {
+          "name": "Victoria Park Subway Station - SMART",
+          "latitude": 43.6953,
+          "longitude": -79.2885,
+          "current_bikes": 4,
+          "optimal_adjustment": 15,
+          "payout_benefit": 75.0
         }
       ]
     }

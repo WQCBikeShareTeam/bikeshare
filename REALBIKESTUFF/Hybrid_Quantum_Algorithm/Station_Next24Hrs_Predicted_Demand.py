@@ -1,5 +1,6 @@
 """
-Refactored Bikeshare Demand and Optimization Pipeline
+Refactored Bikeshare Demand and Optimization Pipeline without extra CLI parameters.
+Caching is controlled by a single flag in the configuration.
 """
 
 import os
@@ -19,17 +20,23 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
+import joblib
+import re
 
 # ============================
 # Configuration Constants
 # ============================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RIDESHIP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "Region_Creation_Parsing", "Region_Creation_Parsing")
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
 EXPORT_DIR = os.path.join(BASE_DIR, "exports")
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+if not os.path.exists(MODEL_DIR):
+    os.makedirs(MODEL_DIR, exist_ok=True)
 
 # API keys and file paths (update these as needed)
 OPENWEATHER_API_KEY = "46574182efce52561d5b815bf2c3c5d2"
-# GOOGLE_API_KEY can be set if using external route APIs
 GOOGLE_API_KEY = "YOUR_GOOGLE_API_KEY"
 
 # Default operational parameters
@@ -42,8 +49,13 @@ COST_PER_KM = 0.50       # $ per kilometer
 COST_PER_HOUR = 10.00    # $ per hour (driver cost)
 WEAR_TEAR_PER_KM = 0.15  # Maintenance cost per kilometer
 
-# Cost scale ( how much cost affects selections )
-COST_SCALE = 0.5
+# Cache settings (set USE_CACHE to True to use cached data)
+USE_CACHE = True
+_weather_data_cache = None  # Module-level cache variable
+
+# Target cluster and travel cost calculation flag
+TARGET_CLUSTER_ID = 4
+CALCULATE_TRAVEL_COSTS = False
 
 # ============================
 # Utility Functions
@@ -64,6 +76,10 @@ def calculate_cluster_center(stations):
     avg_lat = sum(s['latitude'] for s in stations) / len(stations)
     avg_lon = sum(s['longitude'] for s in stations) / len(stations)
     return (avg_lat, avg_lon)
+
+def sanitize_filename(name: str) -> str:
+    # Replace any character that is not alphanumeric, a space, dot, or underscore with an underscore.
+    return re.sub(r'[\\/*?:"<>|]', "_", name)
 
 # ============================
 # Data Loading Functions
@@ -92,13 +108,10 @@ def load_stations_data():
         return {}
 
 def load_historical_data():
-    """
-    Load historical trip data from CSV.
-    (Update the file path as needed.)
-    """
     try:
-        data_file = os.path.join(BASE_DIR, "data", "Bike_share_ridership.csv")
-        df = pd.read_csv(data_file, encoding='utf-8', errors='replace')
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_file = os.path.join(base_dir, "Region_Creation_Parsing", "Region_Creation_Parsing", "Bike share ridership 2024-03.csv")
+        df = pd.read_csv(data_file, encoding='utf-8', encoding_errors='replace')
         df['Start Time'] = pd.to_datetime(df['Start Time'])
         df['End Time'] = pd.to_datetime(df['End Time'])
         return df
@@ -159,9 +172,12 @@ class WeatherZoneLocation:
 
 # Define weather zone locations (update file paths as needed)
 WEATHER_ZONE_LOCATIONS = [
-    WeatherZoneLocation("Toronto City Center", 43.63, -79.4, os.path.join(BASE_DIR, "data", "Toronto_City_Center_Weather.csv")),
-    WeatherZoneLocation("Toronto City", 43.67, -79.40, os.path.join(BASE_DIR, "data", "Toronto_Weather.csv")),
-    WeatherZoneLocation("Toronto Intl Airport", 43.68, -79.63, os.path.join(BASE_DIR, "data", "TorontoAirportWeather.csv"))
+    WeatherZoneLocation("Toronto City Center", 43.63, -79.4,
+                        os.path.join(RIDESHIP_DIR, "Toronto_City_Center_Weather_03-2024.csv")),
+    WeatherZoneLocation("Toronto City", 43.67, -79.40,
+                        os.path.join(RIDESHIP_DIR, "Toronto_Weather-03-2024.csv")),
+    WeatherZoneLocation("Toronto Intl Airport", 43.68, -79.63,
+                        os.path.join(RIDESHIP_DIR, "TorontoAirportWeather-2024-03.csv"))
 ]
 
 class WeatherService:
@@ -249,7 +265,10 @@ def categorize_temperature(temp):
         return "above 25°C"
 
 def load_historical_weather_data():
-    """Load historical weather data from CSV files for each weather zone."""
+    global _weather_data_cache
+    if _weather_data_cache is not None:
+        return _weather_data_cache
+
     weather_data = {}
     for zone_loc in WEATHER_ZONE_LOCATIONS:
         try:
@@ -258,7 +277,8 @@ def load_historical_weather_data():
                 continue
             df = pd.read_csv(zone_loc.filepath)
             df.columns = [col.strip().strip('"').strip("'") for col in df.columns]
-            df['datetime'] = pd.to_datetime(df['Time (LST)'])
+            # Use the full datetime column and specify the format
+            df['datetime'] = pd.to_datetime(df['Date/Time (LST)'], format='%Y-%m-%d %H:%M')
             df['is_rain'] = df['Weather'].fillna('').str.contains('rain', case=False)
             df['is_snow'] = df['Weather'].fillna('').str.contains('snow', case=False)
             df['temperature'] = df['Temp (°C)']
@@ -267,6 +287,7 @@ def load_historical_weather_data():
             print(f"Loaded weather data for {zone_loc.zone} ({len(df)} records)")
         except Exception as e:
             print(f"Error loading weather data for {zone_loc.zone}: {e}")
+    _weather_data_cache = weather_data  # Cache the result
     return weather_data
 
 def assign_stations_to_zones(stations_data):
@@ -347,10 +368,29 @@ def train_prediction_model(station_name: str) -> (dict, dict):
     """
     Train a prediction model (RandomForest) for a given station.
     (For simplicity, only the net flow is modeled.)
+    If a cached model exists in the MODEL_DIR and USE_CACHE is True,
+    it loads that model instead of retraining.
     """
+    # Sanitize the station name for use in filenames
+    safe_station_name = sanitize_filename(station_name)
+    model_filename = f"model_{safe_station_name}.pkl"
+    encoder_filename = f"encoder_{safe_station_name}.pkl"
+    model_filepath = os.path.join(MODEL_DIR, model_filename)
+    encoder_filepath = os.path.join(MODEL_DIR, encoder_filename)
+    
+    if USE_CACHE and os.path.exists(model_filepath) and os.path.exists(encoder_filepath):
+        try:
+            model = joblib.load(model_filepath)
+            le_day = joblib.load(encoder_filepath)
+            print(f"Loaded cached model for {station_name}")
+            return {'flow': model}, {'day': le_day, 'temp': None, 'precip': None}
+        except Exception as e:
+            print(f"Error loading cached model for {station_name}: {e}. Re-training.")
+    
     try:
-        cache_file = preprocess_and_cache_data(force_refresh=False)
-        data = pd.read_csv(cache_file)
+        # Force refresh if caching is disabled
+        cache_file = preprocess_and_cache_data(force_refresh=(not USE_CACHE))
+        data = pd.read_csv(cache_file, encoding='utf-8', encoding_errors='replace')
         data['Start Time'] = pd.to_datetime(data['Start Time'])
         data = data[data['Start Time'].dt.month == 3]  # Example: use March data
     except Exception as e:
@@ -383,8 +423,9 @@ def train_prediction_model(station_name: str) -> (dict, dict):
     features = station_data[['Hour', 'DayOfWeek_encoded', 'temp_encoded', 'precip_encoded']]
     target = station_data['flow']
 
+    # Use fewer trees and enable parallel jobs for faster training.
     if target.nunique() > 1:
-        model = RandomForestRegressor(n_estimators=100, random_state=42)
+        model = RandomForestRegressor(n_estimators=10, n_jobs=-1, max_depth=10, random_state=42)
         X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
@@ -392,55 +433,22 @@ def train_prediction_model(station_name: str) -> (dict, dict):
         r2 = r2_score(y_test, y_pred)
         print(f"Model for {station_name}: MSE={mse:.2f}, R²={r2:.2f}")
     else:
-        model = RandomForestRegressor(n_estimators=10, random_state=42)
+        model = RandomForestRegressor(n_estimators=5, n_jobs=-1, max_depth=10, random_state=42)
         model.fit(features, target)
+
+    # Save the model and encoder if caching is enabled
+    if USE_CACHE:
+        try:
+            joblib.dump(model, model_filepath)
+            joblib.dump(le_day, encoder_filepath)
+            print(f"Saved model for {station_name} to cache.")
+        except Exception as e:
+            print(f"Error saving model for {station_name}: {e}")
 
     models = {'flow': model}
     encoders = {'day': le_day, 'temp': None, 'precip': None}
     return models, encoders
 
-def get_station_predictions(station: dict, start_time: datetime) -> list:
-    """
-    Generate 24-hour predictions for a station using the trained model.
-    """
-    models, encoders = train_prediction_model(station['name'])
-    predictions = []
-    current_bikes = DEFAULT_STARTING_BIKES
-    weather_service = WeatherService()
-    wf = weather_service.get_weather_forecast(station['latitude'], station['longitude'])
-    
-    if wf:
-        if len(wf) < 24:
-            # Pad the forecast by repeating the last available forecast
-            last_entry = wf[-1] if wf else {'temperature': "15°C to 20°C", 'precipitation': "none"}
-            forecast = wf + [last_entry] * (24 - len(wf))
-        else:
-            forecast = wf[:24]
-    else:
-        forecast = [{'temperature': "15°C to 20°C", 'precipitation': "none"}] * 24
-
-    for i in range(24):
-        prediction_time = start_time + timedelta(hours=i)
-        hour = prediction_time.hour
-        day_name = prediction_time.strftime('%A')
-        day_encoded = encoders['day'].transform([day_name])[0]
-        features = {
-            'Hour': hour,
-            'DayOfWeek_encoded': day_encoded,
-            'temp_encoded': 3,    # Dummy value
-            'precip_encoded': 0   # Dummy value
-        }
-        features_df = pd.DataFrame([features])
-        pred_flow = models['flow'].predict(features_df)[0]
-        current_bikes = max(0, min(STATION_CAPACITY, current_bikes + pred_flow))
-        predictions.append({
-            'hour': prediction_time.strftime('%Y-%m-%d %H:00:00'),
-            'net_flow': round(pred_flow, 2),
-            'predicted_bikes': round(current_bikes),
-            'temperature': forecast[i]['temperature'],
-            'precipitation': forecast[i]['precipitation']
-        })
-    return predictions
 
 def calculate_station_payout(predictions: list, station_capacity: int = STATION_CAPACITY) -> list:
     """
@@ -449,6 +457,62 @@ def calculate_station_payout(predictions: list, station_capacity: int = STATION_
     for pred in predictions:
         # In this dummy example, loss is proportional to the absolute net flow.
         pred['hourly_loss'] = abs(pred['net_flow']) * 1.0
+    return predictions
+
+def get_station_predictions(station: dict, start_time: datetime) -> list:
+    """
+    Generate 24-hour predictions for a station using the trained model.
+    This function calls train_prediction_model to obtain a model and encoder,
+    then uses the model to predict net flow for each hour.
+    """
+    # Get the trained model and encoder for this station
+    models, encoders = train_prediction_model(station['name'])
+    
+    predictions = []
+    current_bikes = DEFAULT_STARTING_BIKES
+    weather_service = WeatherService()
+    wf = weather_service.get_weather_forecast(station['latitude'], station['longitude'])
+    
+    # Ensure we have 24 entries for the weather forecast
+    if wf:
+        if len(wf) < 24:
+            last_entry = wf[-1] if wf else {'temperature': "15°C to 20°C", 'precipitation': "none"}
+            forecast = wf + [last_entry] * (24 - len(wf))
+        else:
+            forecast = wf[:24]
+    else:
+        forecast = [{'temperature': "15°C to 20°C", 'precipitation': "none"}] * 24
+
+    # Generate predictions for each of the next 24 hours
+    for i in range(24):
+        prediction_time = start_time + timedelta(hours=i)
+        hour = prediction_time.hour
+        day_name = prediction_time.strftime('%A')
+        # Transform day name to an encoded value using the day encoder
+        day_encoded = encoders['day'].transform([day_name])[0]
+        
+        # Construct feature set (using dummy values for temperature and precipitation)
+        features = {
+            'Hour': hour,
+            'DayOfWeek_encoded': day_encoded,
+            'temp_encoded': 3,    # Dummy value; you can replace with actual feature if available
+            'precip_encoded': 0   # Dummy value; you can replace with actual feature if available
+        }
+        features_df = pd.DataFrame([features])
+        
+        # Predict net flow using the model
+        pred_flow = models['flow'].predict(features_df)[0]
+        # Update bike count while enforcing station capacity limits
+        current_bikes = max(0, min(STATION_CAPACITY, current_bikes + pred_flow))
+        
+        # Append prediction details for this hour
+        predictions.append({
+            'hour': prediction_time.strftime('%Y-%m-%d %H:00:00'),
+            'net_flow': round(pred_flow, 2),
+            'predicted_bikes': round(current_bikes),
+            'temperature': forecast[i]['temperature'],
+            'precipitation': forecast[i]['precipitation']
+        })
     return predictions
 
 def print_station_predictions(predictions: list):
@@ -534,7 +598,7 @@ def export_predictions_to_csv(clusters, cluster_id, filename="hourly_predictions
     else:
         print("No prediction data available to export.")
 
-def create_reduced_clusters(cluster_id=4, max_distance=1, clusters=None, use_cached_predictions=True):
+def create_reduced_clusters(cluster_id=4, max_distance=1, clusters=None, use_cached_predictions=USE_CACHE):
     """
     Create reduced clusters by grouping stations needing bike adjustments.
     (For simplicity, this example only groups stations that already show a nonzero optimal adjustment.)
@@ -557,11 +621,25 @@ def create_reduced_clusters(cluster_id=4, max_distance=1, clusters=None, use_cac
         else:
             station['predictions'] = get_station_predictions(station, current_time)
         station['current_bikes'] = DEFAULT_STARTING_BIKES
+        # Calculate the current payout as the sum of hourly losses.
         station['current_payout'] = sum(pred.get('hourly_loss', 0) for pred in station['predictions'])
-        # For this example, we assume no adjustment (optimal adjustment = 0)
-        station['optimal_adjustment'] = 0
-        station['optimal_payout'] = station['current_payout']
-        station['payout_benefit'] = station['current_payout'] - station['optimal_payout']
+        desired_bike_level = STATION_CAPACITY / 2
+        if station['predictions']:
+            final_predicted = station['predictions'][-1].get('predicted_bikes', DEFAULT_STARTING_BIKES)
+            # Compute the optimal adjustment as the (amplified) difference from the desired level.
+            station['optimal_adjustment'] = round(2 * (desired_bike_level - final_predicted))
+        else:
+            station['optimal_adjustment'] = 0
+        
+        # Fix payout benefit calculation:
+        # Here we assume you gain $5 benefit per bike adjusted.
+        benefit_rate = 5.0  # $5 benefit per bike
+        station['payout_benefit'] = abs(station['optimal_adjustment']) * benefit_rate
+        
+        # Optionally, compute an "optimal payout" by subtracting the benefit from the current payout.
+        station['optimal_payout'] = station['current_payout'] - station['payout_benefit']
+    
+    # Group stations that need adjustment (here, all stations with nonzero adjustment)
     stations_needing_adjustment = [s for s in cluster if abs(s.get('optimal_adjustment', 0)) > 0]
     sub_clusters = []
     remaining = stations_needing_adjustment.copy()
@@ -778,38 +856,33 @@ def visualize_route(selected_stations, payouts, cost_matrix, title, filename):
     print(f"Route visualization saved to {save_path}")
 
 # ============================
-# Main Function
+# Main Function (No CLI parameters)
 # ============================
-def main(target_cluster_id=4, use_cached_predictions=True, use_cached_clusters=True,
-         calculate_travel_costs_flag=True, use_cached_travel_costs=True):
+def main():
+    # Use global configuration parameters
+    target_cluster_id = TARGET_CLUSTER_ID
+
     # Load clusters with station coordinates
     clusters = load_clusters_with_coordinates()
     if target_cluster_id not in clusters:
         print(f"Cluster {target_cluster_id} not found. Using first available cluster.")
         target_cluster_id = list(clusters.keys())[0]
     current_time = datetime.now()
-    # Load predictions (either from CSV or by recalculating)
-    if use_cached_predictions:
-        csv_preds = load_predictions_from_csv()
-        for station in clusters[target_cluster_id]:
-            if station['name'] in csv_preds:
-                station['predictions'] = csv_preds[station['name']]
-            else:
-                station['predictions'] = get_station_predictions(station, current_time)
-    else:
-        for station in clusters[target_cluster_id]:
-            station['predictions'] = get_station_predictions(station, current_time)
+
+    # Always recalc predictions (do not use cache)
+    for station in clusters[target_cluster_id]:
+        station['predictions'] = get_station_predictions(station, current_time)
     export_predictions_to_csv(clusters, target_cluster_id)
-    # Load or create reduced clusters
-    reduced_clusters = load_reduced_clusters_from_json(target_cluster_id)
-    if not reduced_clusters:
-        reduced_clusters = create_reduced_clusters(target_cluster_id, clusters=clusters,
-                                                    use_cached_predictions=use_cached_predictions)
-        export_clusters_to_json(reduced_clusters, allocation=None)
+
+    # Always recalc reduced clusters (do not use cache)
+    reduced_clusters = create_reduced_clusters(target_cluster_id, clusters=clusters, use_cached_predictions=USE_CACHE)
+    export_clusters_to_json(reduced_clusters, allocation=None)
+
     print("\nReduced Clusters Summary:")
     for i, cluster in enumerate(reduced_clusters):
         print(f"Cluster {i}: {len(cluster['stations'])} stations, Adjustment: {cluster['total_adjustment']}, "
               f"Benefit: ${cluster['total_payout_benefit']:.2f}, Center: {cluster['center']}")
+
     allocation = None
     if reduced_clusters:
         available_bikes = 20  # Example: 20 bikes available for allocation
@@ -817,30 +890,10 @@ def main(target_cluster_id=4, use_cached_predictions=True, use_cached_clusters=T
         print(f"\nOptimal Allocation with {available_bikes} bikes: Total Benefit: ${allocation['total_benefit']:.2f}, "
               f"Remaining: {allocation['remaining_bikes']}")
         export_clusters_to_json(reduced_clusters, allocation)
-    if reduced_clusters and len(reduced_clusters) > 1 and calculate_travel_costs_flag:
-        if use_cached_travel_costs:
-            travel_costs = load_travel_costs_from_json()
-            if not travel_costs or len(travel_costs.get('clusters', [])) != len(reduced_clusters):
-                travel_costs = export_travel_costs_to_json(reduced_clusters)
-        else:
-            travel_costs = export_travel_costs_to_json(reduced_clusters)
+
+    if reduced_clusters and len(reduced_clusters) > 1 and CALCULATE_TRAVEL_COSTS:
+        travel_costs = export_travel_costs_to_json(reduced_clusters)
     return "Done"
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Bikeshare Demand and Optimization Pipeline")
-    parser.add_argument('--cluster', type=int, default=4, help="Cluster ID to process")
-    parser.add_argument('--use-cached-predictions', action='store_true', help="Use cached predictions from CSV")
-    parser.add_argument('--use-cached-clusters', action='store_true', help="Use cached reduced clusters from JSON")
-    parser.add_argument('--skip-travel-costs', action='store_true', help="Skip calculating travel costs")
-    parser.add_argument('--recalculate-travel-costs', action='store_true', help="Force recalculation of travel costs")
-    args = parser.parse_args()
-
-    result = main(
-        target_cluster_id=args.cluster,
-        use_cached_predictions=args.use_cached_predictions,
-        use_cached_clusters=args.use_cached_clusters,
-        calculate_travel_costs_flag=not args.skip_travel_costs,
-        use_cached_travel_costs=not args.recalculate_travel_costs
-    )
-    print(result)
+    print(main())
