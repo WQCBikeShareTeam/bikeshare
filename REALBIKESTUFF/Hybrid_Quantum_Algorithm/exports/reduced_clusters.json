@@ -1,154 +1,212 @@
 {
-  "timestamp": "2025-03-27T11:37:47.641738",
-  "clusters_count": 6,
+  "timestamp": "2025-03-27T13:29:35.554176",
+  "clusters_count": 8,
   "clusters": [
     {
       "id": 0,
       "station_count": 1,
-      "total_adjustment": 5,
-      "total_payout_benefit": 30.410000000000004,
+      "total_adjustment": 11,
+      "total_payout_benefit": 34.11,
       "center": [
-        43.6464,
-        -79.4633
+        43.6567,
+        -79.3769
       ],
       "stations": [
         {
-          "name": "High Park Amphitheatre",
-          "latitude": 43.6464,
-          "longitude": -79.4633,
-          "current_bikes": 10,
-          "optimal_adjustment": 5,
-          "payout_benefit": 30.410000000000004
+          "name": "111 Bond St (North of Dundas St E)  - SMART",
+          "latitude": 43.6567,
+          "longitude": -79.3769,
+          "current_bikes": 4,
+          "optimal_adjustment": 11,
+          "payout_benefit": 34.11
         }
       ],
       "allocation": {
-        "requested_bikes": 5,
-        "allocated_bikes": 5,
-        "efficiency": 6.082000000000001,
-        "benefit": 30.410000000000004
+        "cluster_center": [
+          43.6567,
+          -79.3769
+        ],
+        "requested_bikes": 11,
+        "allocated_bikes": 8,
+        "efficiency": 3.100909090909091,
+        "benefit": 24.80727272727273
       }
     },
     {
       "id": 1,
-      "station_count": 1,
-      "total_adjustment": 7,
-      "total_payout_benefit": 40.809999999999995,
+      "station_count": 3,
+      "total_adjustment": 22,
+      "total_payout_benefit": 65.78,
       "center": [
-        43.6283,
-        -79.4789
+        43.68899793333333,
+        -79.2974269
       ],
       "stations": [
         {
-          "name": "Humber Bay Shores Park West",
-          "latitude": 43.6283,
-          "longitude": -79.4789,
-          "current_bikes": 10,
-          "optimal_adjustment": 7,
-          "payout_benefit": 40.809999999999995
+          "name": "Danforth Ave / Barrington Ave",
+          "latitude": 43.6884,
+          "longitude": -79.3005,
+          "current_bikes": 4,
+          "optimal_adjustment": 5,
+          "payout_benefit": 15.499999999999998
+        },
+        {
+          "name": "Langford Ave / Danforth Ave - SMART",
+          "latitude": 43.6892938,
+          "longitude": -79.2958807,
+          "current_bikes": 4,
+          "optimal_adjustment": 9,
+          "payout_benefit": 22.54
+        },
+        {
+          "name": "Trent Ave / Danforth Ave",
+          "latitude": 43.6893,
+          "longitude": -79.2959,
+          "current_bikes": 4,
+          "optimal_adjustment": 8,
+          "payout_benefit": 27.74
         }
-      ],
-      "allocation": {
-        "requested_bikes": 7,
-        "allocated_bikes": 7,
-        "efficiency": 5.829999999999999,
-        "benefit": 40.809999999999995
-      }
+      ]
     },
     {
       "id": 2,
       "station_count": 1,
-      "total_adjustment": 5,
-      "total_payout_benefit": 8.34,
+      "total_adjustment": 4,
+      "total_payout_benefit": 6.289999999999999,
       "center": [
-        43.6475,
-        -79.3887
+        43.6748,
+        -79.3967
       ],
       "stations": [
         {
-          "name": "John St  / Mercer St - SMART",
-          "latitude": 43.6475,
-          "longitude": -79.3887,
-          "current_bikes": 10,
-          "optimal_adjustment": 5,
-          "payout_benefit": 8.34
+          "name": "Davenport Rd / Avenue Rd",
+          "latitude": 43.6748,
+          "longitude": -79.3967,
+          "current_bikes": 4,
+          "optimal_adjustment": 4,
+          "payout_benefit": 6.289999999999999
         }
-      ],
-      "allocation": {
-        "requested_bikes": 4,
-        "allocated_bikes": 4,
-        "efficiency": 2.645,
-        "benefit": 10.58
-      }
+      ]
     },
     {
       "id": 3,
       "station_count": 1,
-      "total_adjustment": -9,
-      "total_payout_benefit": 3.8800000000000003,
+      "total_adjustment": 6,
+      "total_payout_benefit": 8.469999999999999,
       "center": [
-        43.6392,
-        -79.4759
+        43.682,
+        -79.298
       ],
       "stations": [
         {
-          "name": "Ripley Ave / Ormskirk Ave",
-          "latitude": 43.6392,
-          "longitude": -79.4759,
-          "current_bikes": 10,
-          "optimal_adjustment": -9,
-          "payout_benefit": 3.8800000000000003
+          "name": "Gerrard St E / Ted Reeve Dr",
+          "latitude": 43.682,
+          "longitude": -79.298,
+          "current_bikes": 4,
+          "optimal_adjustment": 6,
+          "payout_benefit": 8.469999999999999
         }
-      ],
-      "allocation": {
-        "requested_bikes": 5,
-        "allocated_bikes": 4,
-        "efficiency": 1.668,
-        "benefit": 6.672000000000001
-      }
+      ]
     },
     {
       "id": 4,
       "station_count": 1,
-      "total_adjustment": -7,
-      "total_payout_benefit": 0.14,
+      "total_adjustment": 8,
+      "total_payout_benefit": 27.95,
       "center": [
-        43.6473,
-        -79.3969
+        43.6684,
+        -79.3823
       ],
       "stations": [
         {
-          "name": "Spadina Ave / Adelaide St W",
-          "latitude": 43.6473,
-          "longitude": -79.3969,
-          "current_bikes": 10,
-          "optimal_adjustment": -7,
-          "payout_benefit": 0.14
+          "name": "Isabella St / Church St",
+          "latitude": 43.6684,
+          "longitude": -79.3823,
+          "current_bikes": 4,
+          "optimal_adjustment": 8,
+          "payout_benefit": 27.95
         }
-      ]
+      ],
+      "allocation": {
+        "cluster_center": [
+          43.6684,
+          -79.3823
+        ],
+        "requested_bikes": 8,
+        "allocated_bikes": 8,
+        "efficiency": 3.49375,
+        "benefit": 27.95
+      }
     },
     {
       "id": 5,
       "station_count": 1,
-      "total_adjustment": 4,
-      "total_payout_benefit": 10.58,
+      "total_adjustment": 5,
+      "total_payout_benefit": 13.73,
       "center": [
-        43.6438,
-        -79.4097
+        43.65,
+        -79.3745
       ],
       "stations": [
         {
-          "name": "Walnut Ave / Queen St W",
-          "latitude": 43.6438,
-          "longitude": -79.4097,
-          "current_bikes": 10,
+          "name": "King St E / Church St",
+          "latitude": 43.65,
+          "longitude": -79.3745,
+          "current_bikes": 4,
+          "optimal_adjustment": 5,
+          "payout_benefit": 13.73
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "station_count": 1,
+      "total_adjustment": 4,
+      "total_payout_benefit": 21.619999999999997,
+      "center": [
+        43.6438577,
+        -79.3695119
+      ],
+      "stations": [
+        {
+          "name": "Lower Jarvis / Queens Quay E",
+          "latitude": 43.6438577,
+          "longitude": -79.3695119,
+          "current_bikes": 4,
           "optimal_adjustment": 4,
-          "payout_benefit": 10.58
+          "payout_benefit": 21.619999999999997
+        }
+      ],
+      "allocation": {
+        "cluster_center": [
+          43.6438577,
+          -79.3695119
+        ],
+        "requested_bikes": 4,
+        "allocated_bikes": 4,
+        "efficiency": 5.404999999999999,
+        "benefit": 21.619999999999997
+      }
+    },
+    {
+      "id": 7,
+      "station_count": 1,
+      "total_adjustment": 4,
+      "total_payout_benefit": 7.42,
+      "center": [
+        43.6914,
+        -79.2881
+      ],
+      "stations": [
+        {
+          "name": "Victoria Park Ave / Danforth Ave",
+          "latitude": 43.6914,
+          "longitude": -79.2881,
+          "current_bikes": 4,
+          "optimal_adjustment": 4,
+          "payout_benefit": 7.42
         }
       ]
     }
-  ],
-  "allocation_summary": {
-    "total_benefit": 88.472,
-    "remaining_bikes": 0
-  }
+  ]
 }

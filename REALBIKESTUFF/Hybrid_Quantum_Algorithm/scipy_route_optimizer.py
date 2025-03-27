@@ -17,6 +17,9 @@ from datetime import datetime
 from scipy.optimize import minimize, LinearConstraint, Bounds
 import argparse
 
+# cost scale, how much cost function affects
+COST_SCALE = 0.1
+
 
 def load_json_data(filename: str, directory: str = "exports") -> dict:
     """Load JSON data from file"""
@@ -69,15 +72,15 @@ def setup_scipy_optimization(clusters, cost_matrix):
         # x is a binary vector, 1 if cluster is visited, 0 otherwise
         benefit_term = np.dot(benefits, x)
         
-        # Calculate the cost term
         cost_term = 0
         for i in range(n_clusters):
             for j in range(n_clusters):
                 if i != j:
                     cost_term += costs[i, j] * x[i] * x[j]
         
-        # Return negative (benefits - costs) for minimization
-        return -(benefit_term - cost_term)
+        # Apply the cost scale factor
+        return -(benefit_term - COST_SCALE * cost_term)
+
     
     # Initial point - all clusters unselected
     x0 = np.zeros(n_clusters)
