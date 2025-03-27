@@ -2,16 +2,12 @@
 quantum_tsp_optimizer.py
 
 This file loads reduced cluster data from the bikeshare optimization pipeline,
-computes an optimal route (using a brute-force TSP solver as a placeholder for a 
-quantum-inspired optimization) among cluster centers, and visualizes the path.
-The visualization now displays:
- - Total travel distance,
- - Gross Benefit (from rebalancing),
- - Estimated travel cost (driver wage + wear & tear),
- - Net Benefit (gross benefit minus travel cost).
+filters out clusters that do not provide a significant benefit, computes an optimal 
+route (using a brute-force TSP solver as a placeholder for a quantum-inspired optimization)
+among the remaining cluster centers, and visualizes the path.
 
-Assumptions:
- - Average speed is 25 km/h (including stops).
+Assumptions for travel cost estimation:
+ - Average speed is 50 km/h (including stops).
  - Driver wage is $17.50 per hour.
  - Wear and tear cost is $0.15 per km.
 """
@@ -83,20 +79,17 @@ def visualize_route(points, route, total_distance, gross_benefit, save_filename=
     'points' is a list of (lat, lon) tuples.
     'route' is a list of indices indicating the visiting order.
     
-    In addition to the gross benefit from rebalancing (summed from clusters),
-    this function calculates an estimated travel cost based on:
-      - Average speed of 25 km/h,
-      - Driver wage of $17.50 per hour,
-      - Wear and tear cost of $0.15 per km.
+    Travel cost estimation parameters:
+      - Average speed: 50 km/h
+      - Driver wage: $17.50 per hour
+      - Wear and tear: $0.15 per km
       
-    The net benefit is computed as: gross_benefit - travel_cost.
+    Net benefit is computed as: gross_benefit - travel_cost.
     """
-    # Parameters for travel cost estimation
     driver_wage = 17.50  # per hour
-    average_speed = 25   # km/h
+    average_speed = 50   # km/h
     wear_cost_rate = 0.15  # per km
 
-    # Calculate travel time and cost
     travel_time_hours = total_distance / average_speed
     travel_cost = travel_time_hours * driver_wage + total_distance * wear_cost_rate
     net_benefit = gross_benefit - travel_cost
@@ -105,10 +98,10 @@ def visualize_route(points, route, total_distance, gross_benefit, save_filename=
     G = nx.DiGraph()
     labels = {}
     for i, (lat, lon) in enumerate(points):
-        G.add_node(i, pos=(lon, lat))  # (lon, lat) gives a natural x-y layout
+        G.add_node(i, pos=(lon, lat))  # using (lon, lat) for a natural x-y layout
         labels[i] = f"{i}"
     
-    # Create edges following the route (and close the cycle)
+    # Create edges for the route (closing the cycle)
     route_cycle = route + [route[0]]
     edges = [(route_cycle[i], route_cycle[i+1]) for i in range(len(route_cycle)-1)]
     G.add_edges_from(edges)
@@ -123,7 +116,7 @@ def visualize_route(points, route, total_distance, gross_benefit, save_filename=
         f"TSP Route for Rebalancing Bikes\n"
         f"Total Distance: {total_distance:.2f} km\n"
         f"Gross Benefit: ${gross_benefit:.2f}\n"
-        f"Travel Cost: ${travel_cost:.2f} (Time: {travel_time_hours:.2f}h)\n"
+        f"Travel Cost: ${travel_cost:.2f} (Time: {travel_time_hours:.2f} h)\n"
         f"Net Benefit: ${net_benefit:.2f}"
     )
     plt.xlabel("Longitude")
@@ -151,10 +144,19 @@ def main():
         print("No clusters loaded from the file.")
         return
 
-    # Extract cluster centers and corresponding benefits from the reduced clusters.
+    # Filter out clusters with negligible benefit.
+    # Here we assume a cluster is "worthwhile" if its total_payout_benefit is above a threshold.
+    benefit_threshold = 1.0  # Adjust this threshold as needed
+    filtered_clusters = [c for c in clusters if c.get("total_payout_benefit", 0) > benefit_threshold]
+
+    if not filtered_clusters:
+        print("No clusters with sufficient benefit found.")
+        return
+
+    # Extract centers and corresponding benefits from filtered clusters.
     points = []
     benefits = []
-    for cluster in clusters:
+    for cluster in filtered_clusters:
         center = cluster.get("center")
         benefit = cluster.get("total_payout_benefit", 0)
         if center and isinstance(center, list) and len(center) == 2:
@@ -162,10 +164,10 @@ def main():
             benefits.append(benefit)
     
     if len(points) < 2:
-        print("Not enough cluster centers to compute a route.")
+        print("Not enough cluster centers to compute a route after filtering.")
         return
 
-    print("Computing TSP route over the following cluster centers:")
+    print("Computing TSP route over the following cluster centers (after filtering):")
     for i, p in enumerate(points):
         print(f"Cluster {i}: {p}, Benefit: ${benefits[i]:.2f}")
 
@@ -181,7 +183,7 @@ def main():
     print(f"Total travel distance: {total_distance:.2f} km")
     print(f"Gross Benefit along the route: ${gross_benefit:.2f}")
 
-    # Visualize the route including travel cost and net benefit
+    # Visualize the route with travel cost and net benefit
     visualize_route(points, route, total_distance, gross_benefit)
 
 if __name__ == "__main__":
